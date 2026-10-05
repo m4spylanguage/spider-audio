@@ -1,0 +1,4 @@
+*.o
+spider-pactl
+pactl
+.DS_Store

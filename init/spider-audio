@@ -1,0 +1,31 @@
+#!/sbin/openrc-run
+# 🕷️ Spider OS Permissive Audio Service
+# Unmutes hardware codecs, sets analog gain registers, and enforces 0666 audio node permissions
+
+description="Spider OS Permissive Audio Service"
+
+depend() {
+    need devfs sysfs
+    before ice
+}
+
+start() {
+    ebegin "Initializing Spider Audio"
+    modprobe snd_hda_intel 2>/dev/null || true
+    for i in $(seq 1 30); do
+        [ -e /dev/snd/controlC0 ] && break
+        sleep 0.1
+    done
+
+    if [ -e /dev/snd/controlC0 ]; then
+        chmod -R 0666 /dev/snd/* 2>/dev/null || true
+        # Unmute & set analog codec hardware gain
+        tinymix set 1 1 1 2>/dev/null || true
+        tinymix set 0 74 74 2>/dev/null || true
+        amixer -c 0 sset Master unmute 2>/dev/null || true
+        amixer -c 0 sset Master 100% 2>/dev/null || true
+        amixer -c 0 sset PCM unmute 2>/dev/null || true
+        amixer -c 0 sset PCM 100% 2>/dev/null || true
+    fi
+    eend 0
+}
